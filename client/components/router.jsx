@@ -19,7 +19,6 @@ export const Router = () => {
       <Route path="admin" element={<Admin />} />
       <Route path="signin" element={<SignIn />} />
       <Route path="signup" element={<SignUp />} />
-      <Route path="map" element={<Map />} />
     </Routes>
   );
 };

@@ -3,7 +3,6 @@ import L from 'leaflet';
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import { useEffect, useContext } from 'react';
 import { ApiContext } from '../../utils/api_context';
-import { AuthContext } from '../../utils/auth_context';
 
 const userPositionBubble = {
   color: 'black',
