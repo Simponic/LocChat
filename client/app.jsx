@@ -7,7 +7,9 @@ import { useApi } from './utils/use_api';
 import { useJwtRefresh } from './utils/use_jwt_refresh';
 import { RolesContext } from './utils/roles_context';
 import { parseJwt } from './utils/parse_jwt';
+import { Toaster } from 'react-hot-toast';
 import './app.css';
+import 'leaflet/dist/leaflet.css';
 
 export const App = () => {
   const [authToken, setAuthToken] = useState(null);
@@ -38,6 +40,7 @@ export const App = () => {
     <AuthContext.Provider value={[authToken, setAuthToken]}>
       <ApiContext.Provider value={api}>
         <RolesContext.Provider value={jwtPayload.roles}>
+          <Toaster position="top-center" />
           <HashRouter>
             <Router />
           </HashRouter>

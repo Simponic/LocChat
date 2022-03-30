@@ -4,6 +4,7 @@ import { ApiContext } from '../../utils/api_context';
 import { AuthContext } from '../../utils/auth_context';
 import { RolesContext } from '../../utils/roles_context';
 import { Button } from '../common/button';
+import { Map } from '../map/_map';
 import { Ping } from './ping';
 
 export const Home = () => {
@@ -33,19 +34,19 @@ export const Home = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1>Welcome {user.firstName}</h1>
-      <Button type="button" onClick={logout}>
-        Logout
-      </Button>
-      {roles.includes('admin') && (
-        <Button type="button" onClick={() => navigate('/admin')}>
-          Admin
+    <>
+      <div className="p-4">
+        <h1>Welcome {user.firstName}</h1>
+        <Button type="button" onClick={logout}>
+          Logout
         </Button>
-      )}
-      <section>
-        <Ping />
-      </section>
-    </div>
+        {roles.includes('admin') && (
+          <Button type="button" onClick={() => navigate('/admin')}>
+            Admin
+          </Button>
+        )}
+      </div>
+      <Map user={user} />
+    </>
   );
 };

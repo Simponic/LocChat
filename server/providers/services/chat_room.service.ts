@@ -18,7 +18,21 @@ export class ChatRoomService {
     return this.chatRoomRepository.find();
   }
 
-  findById(id: number) {
-    return this.chatRoomRepository.findOne(id);
+  near({ lat, lng }: { lat: number; lng: number }) {
+    return this.chatRoomRepository.query(
+      `SELECT * FROM chat_room WHERE calculate_distance(latitude, longitude, ${lat}, ${lng}, 'M') < 5`,
+    );
+  }
+
+  findById(id: number, relations: string[] = []) {
+    return this.chatRoomRepository.findOne(id, { relations });
+  }
+
+  save(chatRoom: ChatRoom) {
+    return this.chatRoomRepository.save(chatRoom);
+  }
+
+  remove(chatRoom: ChatRoom) {
+    return this.chatRoomRepository.remove(chatRoom);
   }
 }

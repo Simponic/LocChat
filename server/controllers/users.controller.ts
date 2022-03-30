@@ -35,6 +35,7 @@ export class UsersController {
   @Get('/users/me')
   async getCurrentUser(@JwtBody() jwtBody: JwtBodyDto) {
     const user = await this.usersService.find(jwtBody.userId);
+    delete user.passwordHash;
     return { user };
   }
 
