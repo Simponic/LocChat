@@ -5,7 +5,6 @@ import { AuthContext } from '../utils/auth_context';
 import { SignIn } from './sign_in/_sign_in';
 import { SignUp } from './sign_up/_sign_up';
 import { Admin } from './admin/_admin';
-import { Map } from './map/_map';
 
 export const Router = () => {
   const [authToken] = useContext(AuthContext);
