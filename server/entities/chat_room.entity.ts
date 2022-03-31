@@ -15,6 +15,9 @@ export class ChatRoom {
   @Column()
   radius: number;
 
+  @Column()
+  name: string;
+
   @ManyToOne(() => User, (user) => user.chatRooms)
   user: User;
 }

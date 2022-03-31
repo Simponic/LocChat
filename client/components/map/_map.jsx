@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { Legend } from './legend';
 
-export const Map = ({ user, zoom }) => {
+export const Map = ({ user, zoom, joinRoom }) => {
   const [loading, setLoading] = useState(true);
   const [position, setPosition] = useState({});
   const [positionWatcher, setPositionWatcher] = useState();
@@ -39,7 +39,7 @@ export const Map = ({ user, zoom }) => {
           maxZoom={19}
         />
         <Legend />
-        <Geoman joinRoom={console.log} userPos={position} user={user} />
+        <Geoman joinRoom={joinRoom} userPos={position} user={user} />
       </MapContainer>
     );
   }

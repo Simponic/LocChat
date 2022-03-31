@@ -1,27 +1,29 @@
 import { UseGuards } from '@nestjs/common';
-import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer, WsException } from '@nestjs/websockets';
+import {
+  ConnectedSocket,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  SubscribeMessage,
+  WebSocketGateway,
+  WebSocketServer,
+  WsException,
+} from '@nestjs/websockets';
 import { GatewayJwtBody } from 'server/decorators/gateway_jwt_body.decorator';
 import { JwtBodyDto } from 'server/dto/jwt_body.dto';
 import { Server, Socket } from 'socket.io';
 import { GatewayAuthGuard } from '../guards/gatewayauth.guard';
 import { JwtService } from '../services/jwt.service';
-
-class JoinPayload {
-  currentRoom?: string;
-  newRoom: string;
-}
-
-class PingPayload {
-  currentRoom: string;
-}
+import { UsersService } from '../services/users.service';
 
 @WebSocketGateway()
 @UseGuards(GatewayAuthGuard)
-export class PingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService, private userService: UsersService) {}
 
   afterInit(server: Server) {
     console.log('Sockets initialized');
@@ -36,8 +38,9 @@ export class PingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       const jwt = client.handshake.auth.token;
       const jwtBody = this.jwtService.parseToken(jwt);
-      console.log(client.handshake.query);
+      const chatRoomId = client.handshake.query.chatRoomId;
       console.log('Client Connected: ', jwtBody.userId);
+      client.join(chatRoomId);
     } catch (e) {
       throw new WsException('Invalid token');
     }
@@ -47,21 +50,18 @@ export class PingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     console.log('Client Disconnected');
   }
 
-  @SubscribeMessage('ping')
-  public handlePing(
+  @SubscribeMessage('message')
+  public async handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: PingPayload,
+    @MessageBody() data: string,
     @GatewayJwtBody() jwtBody: JwtBodyDto,
   ) {
-    this.server.to(payload.currentRoom).emit('pong', { message: { userId: jwtBody.userId } });
-    console.log(client.rooms);
-  }
-
-  @SubscribeMessage('join-room')
-  public async joinRoom(client: Socket, payload: JoinPayload) {
-    console.log(payload);
-    payload.currentRoom && (await client.leave(payload.currentRoom));
-    await client.join(payload.newRoom);
-    return { msg: 'Joined room', room: payload.newRoom };
+    const user = await this.userService.find(jwtBody.userId);
+    this.server.to(client.handshake.query.chatRoomId).emit('new-message', {
+      id: user.id * Math.random() * 2048 * Date.now(),
+      content: data,
+      userName: `${user.firstName} ${user.lastName}`,
+      userId: user.id,
+    });
   }
 }

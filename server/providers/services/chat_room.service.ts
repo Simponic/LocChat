@@ -18,9 +18,10 @@ export class ChatRoomService {
     return this.chatRoomRepository.find();
   }
 
-  near({ lat, lng }: { lat: number; lng: number }) {
+  nearOrUserOwns({ lat, lng, userId }: { lat: number; lng: number; userId: number }) {
+    // SQL injection maybe?
     return this.chatRoomRepository.query(
-      `SELECT * FROM chat_room WHERE calculate_distance(latitude, longitude, ${lat}, ${lng}, 'M') < 5`,
+      `SELECT * FROM chat_room WHERE calculate_distance(latitude, longitude, ${lat}, ${lng}, 'M') < 5 OR "userId" = ${userId}`,
     );
   }
 

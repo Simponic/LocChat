@@ -1,16 +1,15 @@
 import { useLeafletContext } from '@react-leaflet/core';
 import L from 'leaflet';
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { ApiContext } from '../../utils/api_context';
 
 const userPositionBubble = {
   color: 'black',
   fillColor: 'black',
-  fillOpacity: 0.6,
-  weight: 5,
+  fillOpacity: 0.4,
+  weight: 1,
   pmIgnore: true,
-  radius: 5,
 };
 
 const joinable = {
@@ -31,7 +30,7 @@ const editable = {
   pmIgnore: false,
 };
 
-const icon = new L.Icon({ iconUrl: markerIconPng, iconSize: [25, 41], iconAnchor: [12, 41] });
+const icon = new L.Icon({ iconUrl: markerIconPng, iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [0, -30] });
 
 const haversine = (p1, p2) => {
   const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
@@ -51,6 +50,7 @@ const haversine = (p1, p2) => {
 export const Geoman = ({ user, userPos, joinRoom }) => {
   const context = useLeafletContext();
   const api = useContext(ApiContext);
+  let dontRedirect = true;
   const circleAndMarkerFromChatroom = (chatRoom) => {
     const circle = new L.Circle(chatRoom.center, chatRoom.radius);
     const marker = new L.Marker(chatRoom.center, { pmIgnore: !chatRoom.isEditable, icon });
@@ -62,10 +62,15 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
         : unjoinable,
     );
     marker.addEventListener('click', () => {
-      console.log(chatRoom.id);
-      console.log(haversine(userPos, { lat: chatRoom.latitude, lng: chatRoom.longitude }), chatRoom.radius, userPos);
+      setTimeout(() => {
+        if (dontRedirect) {
+          joinRoom(chatRoom.id, userPos);
+          return;
+        }
+        dontRedirect = false;
+      }, 500);
     });
-    if (!!chatRoom.isEditable) {
+    if (chatRoom.isEditable) {
       [circle, marker].map((x) => {
         x.on('pm:edit', (e) => {
           const coords = e.target.getLatLng();
@@ -78,6 +83,7 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
           });
         });
         x.on('pm:remove', (e) => {
+          dontRedirect = true;
           context.map.removeLayer(marker);
           context.map.removeLayer(circle);
 
@@ -87,8 +93,16 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
       circle.on('pm:drag', (e) => {
         marker.setLatLng(e.target.getLatLng());
       });
+      marker.bindPopup(chatRoom.name || `Chat Room ${chatRoom.id}`);
+      marker.on('mouseover', (e) => {
+        console.log(chatRoom);
+        e.target.openPopup();
+      });
       marker.on('pm:drag', (e) => {
         circle.setLatLng(e.target.getLatLng());
+      });
+      marker.on('pm:dragstart', (e) => {
+        dontRedirect = true;
       });
     }
     [circle, marker].map((x) => x.addTo(context.map));
@@ -149,17 +163,14 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
 
         const { lat: latitude, lng: longitude } = shape.layer.getLatLng();
         const chatRoom = await api.post('/chat_rooms', {
+          name: prompt("What's the name of the chat room?"),
           latitude,
           longitude,
           radius: shape.layer.getRadius(),
         });
+        console.log(chatRoom);
         reRender();
       }
-    });
-
-    leafletContainer.on('pm:remove', (e) => {
-      console.log('object removed');
-      // console.log(leafletContainer.pm.getGeomanLayers(true).toGeoJSON());
     });
 
     return () => {

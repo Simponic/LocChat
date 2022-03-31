@@ -4,20 +4,43 @@ import { JwtBodyDto } from 'server/dto/jwt_body.dto';
 import { ChatRoomService } from 'server/providers/services/chat_room.service';
 import { UsersService } from 'server/providers/services/users.service';
 
+const haversine = (p1, p2) => {
+  const degreesToRadians = (degrees) => degrees * (Math.PI / 180);
+  const delta = { lat: degreesToRadians(p2.lat - p1.lat), lng: degreesToRadians(p2.lng - p1.lng) };
+  const a =
+    Math.sin(delta.lat / 2) * Math.sin(delta.lat / 2) +
+    Math.cos(degreesToRadians(p1.lat)) *
+      Math.cos(degreesToRadians(p2.lat)) *
+      Math.sin(delta.lng / 2) *
+      Math.sin(delta.lng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const r = 6371 * 1000;
+  return r * c;
+};
 @Controller()
 export class ChatRoomController {
   constructor(private chatRoomService: ChatRoomService, private usersService: UsersService) {}
 
   @Get('/chat_rooms')
-  async get(@Query() query: any) {
-    console.log(query);
-    return await this.chatRoomService.near(query);
+  async get(@JwtBody() jwtBody: JwtBodyDto, @Query() query: any) {
+    return await this.chatRoomService.nearOrUserOwns({ ...query, userId: jwtBody.userId });
+  }
+
+  @Get('/chat_rooms/:id')
+  async getId(@Param('id') id: number) {
+    return await this.chatRoomService.findById(id);
+  }
+
+  @Get('/chat_rooms/:id/joinable')
+  async joinable(@JwtBody() jwtBody, @Param('id') id: number, @Query() query: any) {
+    return !!(await this.chatRoomService.nearOrUserOwns({ ...query, userId: jwtBody.userId })).find(
+      (cr) => cr.id == id && haversine({ lat: cr.latitude, lng: cr.longitude }, query) < cr.radius,
+    );
   }
 
   @Post('/chat_rooms')
   async create(@JwtBody() jwtBody: JwtBodyDto, @Body() chatRoom: any) {
     chatRoom.user = await this.usersService.find(jwtBody.userId);
-    console.log(jwtBody);
     return await this.chatRoomService.create(chatRoom);
   }
 

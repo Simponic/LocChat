@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { config } from './database/config';
 import { ChatRoomModule } from './modules/chat_room.module';
 import { UsersModule } from './modules/users.module';
-import { PingGateway } from './providers/gateways/ping.gateway';
+import { ChatRoomGateway } from './providers/gateways/chat_room.gateway';
 import { AuthGuard } from './providers/guards/auth.guard';
 import { RolesGuard } from './providers/guards/roles.guard';
 import { ChatRoomService } from './providers/services/chat_room.service';
@@ -18,7 +18,7 @@ import { GuardUtil } from './providers/util/guard.util';
   imports: [TypeOrmModule.forRoot(config), UsersModule, ChatRoomModule],
   controllers: [AppController],
   providers: [
-    PingGateway,
+    ChatRoomGateway,
     UsersService,
     RolesService,
     JwtService,

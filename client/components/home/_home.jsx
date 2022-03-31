@@ -5,13 +5,11 @@ import { AuthContext } from '../../utils/auth_context';
 import { RolesContext } from '../../utils/roles_context';
 import { Button } from '../common/button';
 import { Map } from '../map/_map';
-import { Ping } from './ping';
 
 export const Home = () => {
   const [, setAuthToken] = useContext(AuthContext);
   const api = useContext(ApiContext);
   const roles = useContext(RolesContext);
-
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -26,6 +24,13 @@ export const Home = () => {
     const res = await api.del('/sessions');
     if (res.success) {
       setAuthToken(null);
+    }
+  };
+
+  const joinRoom = async (id, userPosition) => {
+    const res = await api.get(`/chat_rooms/${id}/joinable?lat=${userPosition.lat}&lng=${userPosition.lng}`);
+    if (res) {
+      navigate(`/rooms/${id}`);
     }
   };
 
@@ -46,7 +51,7 @@ export const Home = () => {
           </Button>
         )}
       </div>
-      <Map user={user} />
+      <Map user={user} joinRoom={joinRoom} />
     </>
   );
 };

@@ -32,6 +32,11 @@ export class AddChatRoom1648605030863 implements MigrationInterface {
             type: 'float',
             isNullable: false,
           },
+          {
+            name: 'name',
+            type: 'varchar',
+            isNullable: true,
+          },
         ],
       }),
     );
