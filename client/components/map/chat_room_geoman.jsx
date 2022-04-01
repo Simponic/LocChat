@@ -70,6 +70,10 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
         dontRedirect = false;
       }, 500);
     });
+    marker.bindPopup(chatRoom.name || `Chat Room ${chatRoom.id}`);
+    marker.on('mouseover', (e) => {
+      e.target.openPopup();
+    });
     if (chatRoom.isEditable) {
       [circle, marker].map((x) => {
         x.on('pm:edit', (e) => {
@@ -78,6 +82,7 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
           circle.setLatLng(coords);
           api.put(`/chat_rooms/${chatRoom.id}`, {
             ...chatRoom,
+            radius: circle.getRadius(),
             latitude: coords.lat,
             longitude: coords.lng,
           });
@@ -92,11 +97,6 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
       });
       circle.on('pm:drag', (e) => {
         marker.setLatLng(e.target.getLatLng());
-      });
-      marker.bindPopup(chatRoom.name || `Chat Room ${chatRoom.id}`);
-      marker.on('mouseover', (e) => {
-        console.log(chatRoom);
-        e.target.openPopup();
       });
       marker.on('pm:drag', (e) => {
         circle.setLatLng(e.target.getLatLng());
