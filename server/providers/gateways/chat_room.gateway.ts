@@ -31,11 +31,12 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   ) {
     setInterval(async () => {
       const inactiveRooms = await chatRoomService.inactiveRooms();
+      console.log(inactiveRooms);
       inactiveRooms.forEach((room) => {
         this.server.to(room.id).emit('inactive', room.id);
         chatRoomService.remove(room);
       });
-    }, 5 * (1000 * 60));
+    }, 1000 * 60 * 5);
   }
 
   afterInit(server: Server) {

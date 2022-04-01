@@ -4,6 +4,8 @@ import { Repository, LessThan } from 'typeorm';
 import { ChatRoom } from 'server/entities/chat_room.entity';
 import { User } from 'server/entities/user.entity';
 import { ChatRoomConnection } from 'server/entities/chat_room_connection.entity';
+import { UsersService } from './users.service';
+import { RoleKey } from 'server/entities/role.entity';
 
 @Injectable()
 export class ChatRoomService {
@@ -12,6 +14,7 @@ export class ChatRoomService {
     private chatRoomRepository: Repository<ChatRoom>,
     @InjectRepository(ChatRoomConnection)
     private connectedUsersRepository: Repository<ChatRoomConnection>,
+    private usersService: UsersService,
   ) {}
 
   create(chatRoom: ChatRoom) {
@@ -75,13 +78,19 @@ export class ChatRoomService {
 
   async inactiveRooms() {
     const inactiveRooms = await this.chatRoomRepository.find({
+      relations: ['user'],
       where: {
-        lastModified: LessThan(new Date(Date.now() - 2 * 60 * (1000 * 60))),
+        lastModified: LessThan(new Date(Date.now() - 1000 * 60 * 60 * 2)),
       },
     });
-    return inactiveRooms.filter(async (room) => {
-      return !(await this.connectedUsers(room)).length;
+    const isInactivePromises = inactiveRooms.map(async (room) => {
+      const isAdmin = await this.usersService.hasRootRole(room.user.id, RoleKey.ADMIN);
+      const hasMoreThanOneConnections = (await this.connectedUsers(room)).length > 1;
+      return !isAdmin && !hasMoreThanOneConnections;
     });
+    const results = await Promise.all(isInactivePromises);
+
+    return inactiveRooms.filter((_, index) => results[index]);
   }
 
   save(chatRoom: ChatRoom) {
