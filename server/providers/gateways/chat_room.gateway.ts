@@ -28,7 +28,15 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     private jwtService: JwtService,
     private userService: UsersService,
     private chatRoomService: ChatRoomService,
-  ) {}
+  ) {
+    setInterval(async () => {
+      const inactiveRooms = await chatRoomService.inactiveRooms();
+      inactiveRooms.forEach((room) => {
+        this.server.to(room.id).emit('inactive', room.id);
+        chatRoomService.remove(room);
+      });
+    }, 5 * (1000 * 60));
+  }
 
   afterInit(server: Server) {
     console.log('Sockets initialized');
@@ -38,12 +46,18 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     try {
       const jwtBody = this.jwtService.parseToken(client.handshake.auth.token);
       const user = await this.userService.find(jwtBody.userId);
+
       const chatRoom = await this.chatRoomService.findById(client.handshake.query.chatRoomId as unknown as string);
-      await this.chatRoomService.connectUser(chatRoom, user);
-      client.join(chatRoom.id);
-      this.server.to(chatRoom.id).emit('userlist', {
-        users: await this.chatRoomService.connectedUsers(chatRoom),
-      });
+      if (chatRoom) {
+        chatRoom.lastModified = new Date();
+        this.chatRoomService.save(chatRoom);
+
+        await this.chatRoomService.connectUser(chatRoom, user);
+        client.join(chatRoom.id);
+        this.server.to(chatRoom.id).emit('userlist', {
+          users: await this.chatRoomService.connectedUsers(chatRoom),
+        });
+      }
     } catch (e) {
       throw new WsException(e.message);
     }
@@ -53,11 +67,14 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     console.log('Client Disconnected');
     const jwtBody = this.jwtService.parseToken(client.handshake.auth.token);
     const user = await this.userService.find(jwtBody.userId);
+
     const chatRoom = await this.chatRoomService.findById(client.handshake.query.chatRoomId as unknown as string);
-    await this.chatRoomService.disconnectUser(chatRoom, user);
-    this.server.to(chatRoom.id).emit('userlist', {
-      users: await this.chatRoomService.connectedUsers(chatRoom),
-    });
+    if (chatRoom) {
+      await this.chatRoomService.disconnectUser(chatRoom, user);
+      this.server.to(chatRoom.id).emit('userlist', {
+        users: await this.chatRoomService.connectedUsers(chatRoom),
+      });
+    }
   }
 
   @SubscribeMessage('message')
@@ -67,11 +84,18 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
     @GatewayJwtBody() jwtBody: JwtBodyDto,
   ) {
     const user = await this.userService.find(jwtBody.userId);
-    this.server.to(client.handshake.query.chatRoomId).emit('new-message', {
-      id: user.id * Math.random() * Math.pow(2, 16) * Date.now(),
-      content: data,
-      userName: `${user.firstName} ${user.lastName}`,
-      userId: user.id,
-    });
+
+    const chatRoom = await this.chatRoomService.findById(client.handshake.query.chatRoomId as unknown as string);
+    if (chatRoom) {
+      chatRoom.lastModified = new Date();
+      this.chatRoomService.save(chatRoom);
+
+      this.server.to(chatRoom.id).emit('new-message', {
+        id: user.id * Math.random() * Math.pow(2, 16) * Date.now(),
+        content: data,
+        userName: `${user.firstName} ${user.lastName}`,
+        userId: user.id,
+      });
+    }
   }
 }

@@ -11,7 +11,7 @@ import { generateGruvboxFromString } from '../../utils/generate_gruvbox';
 export const ChatRoom = () => {
   const { id } = useParams();
   const [chatRoom, setChatRoom] = useState('');
-  const [connections, messages, sendMessage] = useChat(chatRoom);
+  const [active, connections, messages, sendMessage] = useChat(chatRoom);
   const [message, setMessage] = useState('');
   const [color, setColor] = useState(generateGruvboxFromString('placeholder'));
   const [user, setUser] = useState({});
@@ -78,17 +78,25 @@ export const ChatRoom = () => {
         </div>
       </div>
       <div>
-        <textarea
-          placeholder={'Message'}
-          className="input"
-          onChange={(e) => setMessage(e.target.value)}
-          value={message}
-          rows={1}
-          cols={30}
-        ></textarea>
-        <div className="button" onClick={sendThisMessage}>
-          Send
-        </div>
+        {active ? (
+          <>
+            <textarea
+              placeholder={'Message'}
+              className="input"
+              onChange={(e) => setMessage(e.target.value)}
+              value={message}
+              rows={1}
+              cols={30}
+            ></textarea>
+            <div className="button" onClick={sendThisMessage}>
+              Send
+            </div>
+          </>
+        ) : (
+          <div>
+            <p>This room has been marked inactive and has been deleted.</p>
+          </div>
+        )}
         <div className="button">
           <Link to="/">Back to map</Link>
         </div>

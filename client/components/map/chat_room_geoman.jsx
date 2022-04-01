@@ -51,7 +51,7 @@ const haversine = (p1, p2) => {
 export const Geoman = ({ user, userPos, joinRoom }) => {
   const context = useLeafletContext();
   const api = useContext(ApiContext);
-  let dontRedirect = true;
+  let dontRedirect = false;
   const circleAndMarkerFromChatroom = (chatRoom) => {
     const circle = new L.Circle(chatRoom.center, chatRoom.radius);
     const marker = new L.Marker(chatRoom.center, { pmIgnore: !chatRoom.editable, icon });
@@ -64,7 +64,7 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
           return;
         }
         dontRedirect = false;
-      }, 500);
+      }, 200);
     });
     marker.bindPopup(chatRoom.name || `Chat Room ${chatRoom.id}`);
     marker.on('mouseover', (e) => {
@@ -158,7 +158,7 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
 
         const { lat: latitude, lng: longitude } = shape.layer.getLatLng();
         const chatRoom = await api.post('/chat_rooms', {
-          name: prompt("What's the name of the chat room?"),
+          name: prompt("What's the name of the chat room?\n(Chat rooms are deleted after 2 hours of inactivity)"),
           latitude,
           longitude,
           radius: shape.layer.getRadius(),

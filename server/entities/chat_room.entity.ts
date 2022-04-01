@@ -20,7 +20,7 @@ export class ChatRoom {
   name: string;
 
   @Column()
-  lastConnection: Date;
+  lastModified: Date;
 
   @ManyToOne(() => User, (user) => user.chatRooms)
   user: User;

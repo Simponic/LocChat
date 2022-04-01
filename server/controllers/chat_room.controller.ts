@@ -19,11 +19,7 @@ const haversine = (p1, p2) => {
 };
 @Controller()
 export class ChatRoomController {
-  constructor(private chatRoomService: ChatRoomService, private usersService: UsersService) {
-    setInterval(() => {
-      console.log('Hello');
-    }, 60 * 1000);
-  }
+  constructor(private chatRoomService: ChatRoomService, private usersService: UsersService) {}
 
   @Get('/chat_rooms')
   async get(@JwtBody() jwtBody: JwtBodyDto, @Query() query: any) {

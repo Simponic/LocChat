@@ -44,7 +44,7 @@ export class AddChatRoom1648605030863 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'lastConnection',
+            name: 'lastModified',
             type: 'timestamp',
             default: 'now()',
           },

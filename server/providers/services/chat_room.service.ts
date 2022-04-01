@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { ChatRoom } from 'server/entities/chat_room.entity';
 import { User } from 'server/entities/user.entity';
 import { ChatRoomConnection } from 'server/entities/chat_room_connection.entity';
@@ -72,6 +72,17 @@ export class ChatRoomService {
     }
     return false;
   };
+
+  async inactiveRooms() {
+    const inactiveRooms = await this.chatRoomRepository.find({
+      where: {
+        lastModified: LessThan(new Date(Date.now() - 2 * 60 * (1000 * 60))),
+      },
+    });
+    return inactiveRooms.filter(async (room) => {
+      return !(await this.connectedUsers(room)).length;
+    });
+  }
 
   save(chatRoom: ChatRoom) {
     return this.chatRoomRepository.save(chatRoom);

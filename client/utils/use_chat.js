@@ -5,8 +5,8 @@ import { io } from 'socket.io-client';
 export const useChat = (chatRoom) => {
   const [messages, setMessages] = useState([]);
   const [connections, setConnections] = useState([]);
+  const [active, setActive] = useState(true);
   const messageRef = useRef([]);
-  const connectionsRef = useRef([]);
   const [socket, setSocket] = useState({});
   const [authToken] = useContext(AuthContext);
 
@@ -28,8 +28,10 @@ export const useChat = (chatRoom) => {
         setMessages([...messageRef.current]);
       });
       socket.on('userlist', ({ users }) => {
-        connectionsRef.current = users;
-        setConnections([...connectionsRef.current]);
+        setConnections([...users]);
+      });
+      socket.on('inactive', (id) => {
+        setActive(false);
       });
       return () => {
         socket.off('new-message');
@@ -44,5 +46,5 @@ export const useChat = (chatRoom) => {
     }
   };
 
-  return [connections, messages, sendMessage];
+  return [active, connections, messages, sendMessage];
 };
