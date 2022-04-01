@@ -43,6 +43,11 @@ export class AddChatRoom1648605030863 implements MigrationInterface {
             type: 'varchar',
             isNullable: true,
           },
+          {
+            name: 'lastConnection',
+            type: 'timestamp',
+            default: 'now()',
+          },
         ],
       }),
       true,

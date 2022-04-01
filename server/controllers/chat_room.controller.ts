@@ -19,7 +19,11 @@ const haversine = (p1, p2) => {
 };
 @Controller()
 export class ChatRoomController {
-  constructor(private chatRoomService: ChatRoomService, private usersService: UsersService) {}
+  constructor(private chatRoomService: ChatRoomService, private usersService: UsersService) {
+    setInterval(() => {
+      console.log('Hello');
+    }, 60 * 1000);
+  }
 
   @Get('/chat_rooms')
   async get(@JwtBody() jwtBody: JwtBodyDto, @Query() query: any) {
@@ -57,6 +61,11 @@ export class ChatRoomController {
 
   @Post('/chat_rooms')
   async create(@JwtBody() jwtBody: JwtBodyDto, @Body() chatRoom: any) {
+    if (chatRoom.radius > 1000) {
+      return {
+        error: 'Radius cannot be greater than 1000 meters',
+      };
+    }
     chatRoom.user = await this.usersService.find(jwtBody.userId);
     return await this.chatRoomService.create(chatRoom);
   }

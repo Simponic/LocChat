@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router';
 import { ApiContext } from '../../utils/api_context';
 import { AuthContext } from '../../utils/auth_context';
@@ -31,6 +32,8 @@ export const Home = () => {
     const joinable = await api.get(`/chat_rooms/${id}/joinable?lat=${userPosition.lat}&lng=${userPosition.lng}`);
     if (joinable) {
       navigate(`/rooms/${id}`);
+    } else {
+      toast.error('Room is not joinable');
     }
   };
 

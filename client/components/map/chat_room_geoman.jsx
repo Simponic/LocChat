@@ -2,6 +2,7 @@ import { useLeafletContext } from '@react-leaflet/core';
 import L from 'leaflet';
 import markerIconPng from 'leaflet/dist/images/marker-icon.png';
 import { useEffect, useContext, useState } from 'react';
+import toast from 'react-hot-toast';
 import { ApiContext } from '../../utils/api_context';
 
 const userPositionBubble = {
@@ -162,7 +163,12 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
           longitude,
           radius: shape.layer.getRadius(),
         });
-        console.log(chatRoom);
+        if (chatRoom.error) {
+          toast.error(chatRoom.error);
+        } else if (chatRoom.id) {
+          toast.success('Chat room created');
+        }
+
         reRender();
       }
     });

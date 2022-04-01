@@ -1,6 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
 import { ApiContext } from '../../utils/api_context';
-import { useMessages } from '../../utils/use_messages';
+import { useChat } from '../../utils/use_chat';
 import { Link, useParams } from 'react-router-dom';
 import { generateGruvboxFromString } from '../../utils/generate_gruvbox';
 
@@ -11,7 +11,7 @@ import { generateGruvboxFromString } from '../../utils/generate_gruvbox';
 export const ChatRoom = () => {
   const { id } = useParams();
   const [chatRoom, setChatRoom] = useState('');
-  const [messages, sendMessage] = useMessages(chatRoom);
+  const [connections, messages, sendMessage] = useChat(chatRoom);
   const [message, setMessage] = useState('');
   const [color, setColor] = useState(generateGruvboxFromString('placeholder'));
   const [user, setUser] = useState({});
@@ -56,14 +56,26 @@ export const ChatRoom = () => {
       <div style={{ textAlign: 'center' }}>
         <h2>{chatRoom?.name || `Chat Room ${chatRoom?.id}`}</h2>
       </div>
-      <div id="chat" className="chat">
-        <p>Welcome!</p>
-        {messages.map((message) => (
-          <div key={message.id} style={{ lineBreak: 'normal' }}>
-            <span style={{ color: generateGruvboxFromString(message.userName) }}>{message.userName}: </span>
-            <span>{message.content}</span>
-          </div>
-        ))}
+      <div className="chat-container">
+        <div id="chat" className="chat-box">
+          {messages.map((message) => (
+            <div key={message.id} style={{ lineBreak: 'normal' }}>
+              <span style={{ color: generateGruvboxFromString(message.userName) }}>{message.userName}: </span>
+              <span>{message.content}</span>
+            </div>
+          ))}
+        </div>
+        <div className="chat-connections">
+          <h1>Connected Users ({connections.length})</h1>
+          <hr />
+          <ul>
+            {connections.map((user) => (
+              <li key={user.id} style={{ color: generateGruvboxFromString(user.userName) }}>
+                {user.userName}
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
       <div>
         <textarea

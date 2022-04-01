@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { ChatRoomConnection } from './chat_room_connection.entity';
 import { User } from './user.entity';
 
 @Entity()
@@ -18,6 +19,12 @@ export class ChatRoom {
   @Column()
   name: string;
 
+  @Column()
+  lastConnection: Date;
+
   @ManyToOne(() => User, (user) => user.chatRooms)
   user: User;
+
+  @OneToMany(() => ChatRoomConnection, (chatRoomConnection) => chatRoomConnection.chatRoom)
+  chatRoomConnections: ChatRoomConnection[];
 }

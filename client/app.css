@@ -66,11 +66,23 @@ body {
   box-shadow: rgb( 0, 0, 0, 0.6) 6px 45px 45px -12px;
 }
 
-.chat {
+.chat-container {
   border-bottom: 1px solid #d65d0e;
   height: 200px;
-  overflow-y: scroll;
   padding-bottom: 12px;
+  display: flex;
+  flex-direction: row;
+  min-height: min-content;
+}
+
+.chat-box {
+  flex: 3;
+  overflow-y: scroll;
+}
+
+.chat-connections {
+  flex: 1;
+  overflow-y: scroll;
 }
 
 * {
@@ -117,3 +129,4 @@ body {
   border-radius: 8px;
   display: inline-block;
 }
+

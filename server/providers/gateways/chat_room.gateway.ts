@@ -14,6 +14,7 @@ import { GatewayJwtBody } from 'server/decorators/gateway_jwt_body.decorator';
 import { JwtBodyDto } from 'server/dto/jwt_body.dto';
 import { Server, Socket } from 'socket.io';
 import { GatewayAuthGuard } from '../guards/gatewayauth.guard';
+import { ChatRoomService } from '../services/chat_room.service';
 import { JwtService } from '../services/jwt.service';
 import { UsersService } from '../services/users.service';
 
@@ -23,31 +24,40 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   @WebSocketServer()
   server: Server;
 
-  constructor(private jwtService: JwtService, private userService: UsersService) {}
+  constructor(
+    private jwtService: JwtService,
+    private userService: UsersService,
+    private chatRoomService: ChatRoomService,
+  ) {}
 
   afterInit(server: Server) {
     console.log('Sockets initialized');
   }
 
-  handleConnection(client: Socket) {
-    // you can do things like add users to rooms
-    // or emit events here.
-    // IMPORTANT! The GatewayAuthGuard doesn't trigger on these handlers
-    // if you need to do anything in this method you need to authenticate the JWT
-    // manually.
+  async handleConnection(client: Socket) {
     try {
-      const jwt = client.handshake.auth.token;
-      const jwtBody = this.jwtService.parseToken(jwt);
-      const chatRoomId = client.handshake.query.chatRoomId;
-      console.log('Client Connected: ', jwtBody.userId);
-      client.join(chatRoomId);
+      const jwtBody = this.jwtService.parseToken(client.handshake.auth.token);
+      const user = await this.userService.find(jwtBody.userId);
+      const chatRoom = await this.chatRoomService.findById(client.handshake.query.chatRoomId as unknown as string);
+      await this.chatRoomService.connectUser(chatRoom, user);
+      client.join(chatRoom.id);
+      this.server.to(chatRoom.id).emit('userlist', {
+        users: await this.chatRoomService.connectedUsers(chatRoom),
+      });
     } catch (e) {
-      throw new WsException('Invalid token');
+      throw new WsException(e.message);
     }
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log('Client Disconnected');
+    const jwtBody = this.jwtService.parseToken(client.handshake.auth.token);
+    const user = await this.userService.find(jwtBody.userId);
+    const chatRoom = await this.chatRoomService.findById(client.handshake.query.chatRoomId as unknown as string);
+    await this.chatRoomService.disconnectUser(chatRoom, user);
+    this.server.to(chatRoom.id).emit('userlist', {
+      users: await this.chatRoomService.connectedUsers(chatRoom),
+    });
   }
 
   @SubscribeMessage('message')
@@ -58,7 +68,7 @@ export class ChatRoomGateway implements OnGatewayInit, OnGatewayConnection, OnGa
   ) {
     const user = await this.userService.find(jwtBody.userId);
     this.server.to(client.handshake.query.chatRoomId).emit('new-message', {
-      id: user.id * Math.random() * 2048 * Date.now(),
+      id: user.id * Math.random() * Math.pow(2, 16) * Date.now(),
       content: data,
       userName: `${user.firstName} ${user.lastName}`,
       userId: user.id,
