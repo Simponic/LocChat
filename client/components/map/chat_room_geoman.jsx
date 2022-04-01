@@ -158,7 +158,9 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
 
         const { lat: latitude, lng: longitude } = shape.layer.getLatLng();
         const chatRoom = await api.post('/chat_rooms', {
-          name: prompt("What's the name of the chat room?\n(Chat rooms are deleted after 2 hours of inactivity)"),
+          name: prompt(
+            "What's the name of the chat room?\n(Chat rooms are deleted after 2 hours of inactivity, unless you are an admin)",
+          ),
           latitude,
           longitude,
           radius: shape.layer.getRadius(),
