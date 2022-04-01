@@ -1,16 +1,22 @@
 import { MigrationInterface, QueryRunner, Table, TableForeignKey } from 'typeorm';
+import { uniqueId } from 'lodash';
 
 export class AddChatRoom1648605030863 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // uuid from https://github.com/typeorm/typeorm/issues/3770
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
+
     await queryRunner.createTable(
       new Table({
         name: 'chat_room',
         columns: [
           {
             name: 'id',
-            type: 'int',
+            type: 'text',
             isPrimary: true,
-            isGenerated: true,
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: 'uuid_generate_v4()',
           },
           {
             name: 'userId',
@@ -39,6 +45,7 @@ export class AddChatRoom1648605030863 implements MigrationInterface {
           },
         ],
       }),
+      true,
     );
 
     await queryRunner.createForeignKey(

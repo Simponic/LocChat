@@ -53,17 +53,12 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
   let dontRedirect = true;
   const circleAndMarkerFromChatroom = (chatRoom) => {
     const circle = new L.Circle(chatRoom.center, chatRoom.radius);
-    const marker = new L.Marker(chatRoom.center, { pmIgnore: !chatRoom.isEditable, icon });
-    circle.setStyle(
-      chatRoom.isEditable
-        ? editable
-        : haversine(userPos, { lat: chatRoom.latitude, lng: chatRoom.longitude }) < chatRoom.radius
-        ? joinable
-        : unjoinable,
-    );
+    const marker = new L.Marker(chatRoom.center, { pmIgnore: !chatRoom.editable, icon });
+    console.log(chatRoom);
+    circle.setStyle(chatRoom.editable ? editable : chatRoom.joinable ? joinable : unjoinable); // We only send the id when user is in the radius
     marker.addEventListener('click', () => {
       setTimeout(() => {
-        if (dontRedirect) {
+        if (!dontRedirect) {
           joinRoom(chatRoom.id, userPos);
           return;
         }
@@ -74,7 +69,7 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
     marker.on('mouseover', (e) => {
       e.target.openPopup();
     });
-    if (chatRoom.isEditable) {
+    if (chatRoom.editable) {
       [circle, marker].map((x) => {
         x.on('pm:edit', (e) => {
           const coords = e.target.getLatLng();
@@ -122,7 +117,6 @@ export const Geoman = ({ user, userPos, joinRoom }) => {
       circleAndMarkerFromChatroom({
         center: [x.latitude, x.longitude],
         ...x,
-        isEditable: user && x.userId == user.id,
       });
     });
     layersToRemove.map((x) => context.map.removeLayer(x));

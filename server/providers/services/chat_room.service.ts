@@ -25,7 +25,7 @@ export class ChatRoomService {
     );
   }
 
-  findById(id: number, relations: string[] = []) {
+  findById(id: string, relations: string[] = []) {
     return this.chatRoomRepository.findOne(id, { relations });
   }
 

@@ -28,8 +28,8 @@ export const Home = () => {
   };
 
   const joinRoom = async (id, userPosition) => {
-    const res = await api.get(`/chat_rooms/${id}/joinable?lat=${userPosition.lat}&lng=${userPosition.lng}`);
-    if (res) {
+    const joinable = await api.get(`/chat_rooms/${id}/joinable?lat=${userPosition.lat}&lng=${userPosition.lng}`);
+    if (joinable) {
       navigate(`/rooms/${id}`);
     }
   };

@@ -23,18 +23,35 @@ export class ChatRoomController {
 
   @Get('/chat_rooms')
   async get(@JwtBody() jwtBody: JwtBodyDto, @Query() query: any) {
-    return await this.chatRoomService.nearOrUserOwns({ ...query, userId: jwtBody.userId });
+    const user = await this.usersService.find(jwtBody.userId);
+    const rooms = await this.chatRoomService.nearOrUserOwns({ ...query, userId: jwtBody.userId });
+    return rooms.map((cr) => {
+      const editable = cr.userId === user.id;
+      const joinable = editable || haversine({ lat: cr.latitude, lng: cr.longitude }, query) <= cr.radius;
+      return joinable
+        ? { ...cr, editable, joinable }
+        : {
+            name: cr.name,
+            latitude: cr.latitude,
+            longitude: cr.longitude,
+            radius: cr.radius,
+            editable,
+            joinable,
+          };
+    });
   }
 
   @Get('/chat_rooms/:id')
-  async getId(@Param('id') id: number) {
+  async getId(@Param('id') id: string) {
     return await this.chatRoomService.findById(id);
   }
 
   @Get('/chat_rooms/:id/joinable')
-  async joinable(@JwtBody() jwtBody, @Param('id') id: number, @Query() query: any) {
+  async joinable(@JwtBody() jwtBody: JwtBodyDto, @Param('id') id: string, @Query() query: any) {
     return !!(await this.chatRoomService.nearOrUserOwns({ ...query, userId: jwtBody.userId })).find(
-      (cr) => cr.id == id && haversine({ lat: cr.latitude, lng: cr.longitude }, query) < cr.radius,
+      (cr) =>
+        cr.id == id &&
+        (haversine({ lat: cr.latitude, lng: cr.longitude }, query) <= cr.radius || cr.userId === jwtBody.userId),
     );
   }
 
@@ -44,7 +61,7 @@ export class ChatRoomController {
     return await this.chatRoomService.create(chatRoom);
   }
 
-  private async authorized(jwtBody: JwtBodyDto, chatRoom: any) {
+  private async userCanEdit(jwtBody: JwtBodyDto, chatRoom: any) {
     const user = await this.usersService.find(jwtBody.userId);
     if (user.id !== chatRoom.user.id) {
       return {
@@ -55,10 +72,10 @@ export class ChatRoomController {
   }
 
   @Put('/chat_rooms/:id')
-  async update(@JwtBody() jwtBody: JwtBodyDto, @Param('id') id: number, @Body() chatRoom: any) {
+  async update(@JwtBody() jwtBody: JwtBodyDto, @Param('id') id: string, @Body() chatRoom: any) {
     console.log(id);
     const chat_room = await this.chatRoomService.findById(id, ['user']);
-    if (!(await this.authorized(jwtBody, chat_room))) {
+    if (!(await this.userCanEdit(jwtBody, chat_room))) {
       return chat_room;
     }
     chat_room.latitude = chatRoom.latitude;
@@ -68,9 +85,9 @@ export class ChatRoomController {
   }
 
   @Delete('/chat_rooms/:id')
-  async delete(@JwtBody() jwtBody: JwtBodyDto, @Param('id') id: number) {
+  async delete(@JwtBody() jwtBody: JwtBodyDto, @Param('id') id: string) {
     const chat_room = await this.chatRoomService.findById(id, ['user']);
-    if (!(await this.authorized(jwtBody, chat_room))) {
+    if (!(await this.userCanEdit(jwtBody, chat_room))) {
       return false;
     }
     return await this.chatRoomService.remove(chat_room);

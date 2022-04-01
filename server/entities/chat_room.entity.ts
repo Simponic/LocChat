@@ -4,7 +4,7 @@ import { User } from './user.entity';
 @Entity()
 export class ChatRoom {
   @PrimaryGeneratedColumn()
-  id: number;
+  id: string;
 
   @Column()
   latitude: number;
